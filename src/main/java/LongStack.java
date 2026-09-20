@@ -60,9 +60,8 @@ public class LongStack {
       if (o == null || !(o instanceof LongStack)) {
          return false;
       }
-      LongStack other = (LongStack) o;
-      boolean result = this.toString().equals(other.toString());
-      return result;
+      LongStack other = (LongStack)o;
+      return this.stack.equals(other.stack);
    }
 
    @Override
