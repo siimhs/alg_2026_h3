@@ -1,52 +1,94 @@
+import java.util.*;
 
 public class LongStack {
 
+   private final List<Long> stack = new ArrayList<>();
    public static void main (String[] argum) {
       // TODO!!! Your tests here!
    }
 
-   LongStack() {
-      // TODO!!! Your constructor here!
-   }
-
    @Override
    public Object clone() throws CloneNotSupportedException {
-      return this; // TODO!!! Your code here!
+      LongStack result = new LongStack();
+      for (long l : stack) {
+         result.push(l);
+      }
+      return result;
    }
 
    public boolean stEmpty() {
-      return false; // TODO!!! Your code here!
+      return stack.isEmpty();
    }
 
    public void push (long a) {
-      // TODO!!! Your code here!
+      stack.add(a);
    }
 
    public long pop() {
-      return 0; // TODO!!! Your code here!
-   } // pop
+      return stack.removeLast();
+   }
 
    public void op (String s) {
-      // TODO!!!
+      switch (s) {
+         case "+":
+            push(pop() + pop());
+            break;
+         case "-":
+            long a = pop();
+            long b = pop();
+            push(b - a);
+            break;
+         case "*":
+            push(pop() * pop());
+            break;
+         case "/":
+            long c = pop();
+            long d = pop();
+            push(d / c);
+            break;
+         default:
+            throw new RuntimeException("Unknown operation: " + s);
+      }
    }
-  
+
    public long tos() {
-      return 0; // TODO!!! Your code here!
+      return stack.get(stack.size() - 1);
    }
 
    @Override
    public boolean equals (Object o) {
-      return true; // TODO!!! Your code here!
+      if (o == null || !(o instanceof LongStack)) {
+         return false;
+      }
+      LongStack other = (LongStack) o;
+      boolean result = this.toString().equals(other.toString());
+      return result;
    }
 
    @Override
    public String toString() {
-      return null; // TODO!!! Your code here!
+      String result = "";
+      for (long l : stack) {
+         result += l + " ";
+      }
+      return result;
    }
 
    public static long interpret (String pol) {
-      return 0; // TODO!!! Your code here!
+      String[] tokens = pol.trim().split("\\s+");
+      LongStack stack = new LongStack();
+      for (String token : tokens) {
+         if (token.equals("+") || token.equals("-") || token.equals("*") || token.equals("/")) {
+            stack.op(token);
+         } else {
+            stack.push(Long.parseLong(token));
+         }
+      }
+      long result = stack.pop();
+      if (!stack.stEmpty()) {
+         throw new RuntimeException("Stack not empty after interpretation");
+      }
+      return result;
    }
 
 }
-
