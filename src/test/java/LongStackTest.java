@@ -274,5 +274,92 @@ public class LongStackTest {
       LongStack.interpret ("+");
    }
 
+   @Test (timeout=1000)
+   public void testInterpretReturnStack() {
+      String s = "15 7 3 >R - R> -";
+      assertEquals ("expression: " + s, 5, LongStack.interpret (s));
+      s = "3 >R R@ R> *";
+      assertEquals ("expression: " + s, 9, LongStack.interpret (s));
+      s = "2 5 >R 3 R@ * - R> -";
+      assertEquals ("expression: " + s, -18, LongStack.interpret (s));
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testToRUnderflow() {
+      LongStack.interpret (">R 1");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testRFromUnderflow() {
+      LongStack.interpret ("1 R> +");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testRFetchUnderflow() {
+      LongStack.interpret ("1 R@ +");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testReturnStackNotEmptyAtEnd() {
+      LongStack.interpret ("1 2 >R");
+   }
+
+   @Test (timeout=1000)
+   public void testInterpretReturnStackMore() {
+      String s = "7 >R R>";
+      assertEquals ("expression: " + s, 7, LongStack.interpret (s));
+      s = "1 2 3 >R >R R> R> - +";
+      assertEquals ("R-stack must be LIFO; expression: " + s, 0,
+         LongStack.interpret (s));
+      s = "5 >R R@ R@ R> + +";
+      assertEquals ("R@ must not remove; expression: " + s, 15,
+         LongStack.interpret (s));
+      s = "-4 >R 10 R@ / R> *";
+      assertEquals ("expression: " + s, 8, LongStack.interpret (s));
+      s = "\t3 >R  R@\tR> *  ";
+      assertEquals ("expression: " + Aout.toString (s), 9,
+         LongStack.interpret (s));
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testReturnStackDataEmptyAtEnd() {
+      LongStack.interpret ("1 >R");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testReturnStackLeftAfterFetch() {
+      LongStack.interpret ("1 >R R@");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testRFromTwice() {
+      LongStack.interpret ("1 >R R> R> +");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testRFetchAfterRFrom() {
+      LongStack.interpret ("1 >R R> R@ +");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testToRTwiceOneElement() {
+      LongStack.interpret ("1 >R >R R> R>");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testRFetchAlone() {
+      LongStack.interpret ("R@");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testReturnStackOpsCaseSensitive() {
+      LongStack.interpret ("1 >r r>");
+   }
+
+   @Test (expected=RuntimeException.class)
+   public void testReturnStackOpNoSpace() {
+      LongStack.interpret ("1 >RR>");
+   }
+
 }
 

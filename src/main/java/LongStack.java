@@ -1,26 +1,33 @@
-/*
- * This file was written with the help of Claude, an AI assistant by Anthropic
- * (model: Claude Opus 5.5, claude-opus-5-5), used via Claude Code.
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+
+/**
+ * Sources: Java API documentation;
+ * implementation discussed and reviewed with Claude AI assistant.
  */
-
-import java.util.*;
-
 public class LongStack {
 
-   /** Stack elements, bottom first, top last. */
-   private final LinkedList<Long> stack = new LinkedList<>();
+   private LinkedList<Long> stack;
 
    public static void main (String[] argum) {
-      System.out.println(interpret("35 10 -3 + /"));
+      LongStack s = new LongStack();
+      s.push(3);
+      s.push(4);
+      s.op("+");
+      System.out.println(s + "  (oodatud: 7)");
+      System.out.println(interpret("2 5 - 3 *") + "  (oodatud: -9)");
+      System.out.println(interpret("35 10 -3 + /") + "  (oodatud: 5)");
+   }
+
+   LongStack() {
+      stack = new LinkedList<>();
    }
 
    @Override
    public Object clone() throws CloneNotSupportedException {
-      LongStack result = new LongStack();
-      for (long l : stack) {
-         result.push(l);
-      }
-      return result;
+      LongStack copy = new LongStack();
+      copy.stack = new LinkedList<Long>(stack);
+      return copy;
    }
 
    public boolean stEmpty() {
@@ -28,110 +35,130 @@ public class LongStack {
    }
 
    public void push (long a) {
-      stack.addLast(a);
+      stack.add(a);
    }
 
    public long pop() {
-      if (stEmpty()) {
-         throw new RuntimeException("pop: cannot pop from an empty stack");
-      }
+      if (stEmpty()) throw new RuntimeException("Cannot pop: stack is empty");
       return stack.removeLast();
-   }
+   } // pop
 
    public void op (String s) {
-      if (s == null || !(s.equals("+") || s.equals("-")
-            || s.equals("*") || s.equals("/"))) {
-         throw new RuntimeException("op: illegal operation \"" + s
-               + "\", allowed are + - * /");
+      if (s == null) {
+         throw new RuntimeException("Illegal operation: null");
       }
       if (stack.size() < 2) {
-         throw new RuntimeException("op: operation \"" + s
-               + "\" needs 2 elements, but stack [" + this + "] has "
-               + stack.size());
+         throw new RuntimeException("Cannot perform operation \"" + s
+                 + "\": two elements needed but stack is \"" + this + "\"");
       }
-      long b = pop();
-      long a = pop();
+
+      long b = stack.getLast();
+      long a = stack.get(stack.size() - 2);
+      long result;
+
       switch (s) {
-         case "+":
-            push(a + b);
-            break;
-         case "-":
-            push(a - b);
-            break;
-         case "*":
-            push(a * b);
+         case "+": result = a + b; break;
+         case "-": result = a - b; break;
+         case "*": result = a * b; break;
+         case "/":
+            if (b == 0) {
+               throw new RuntimeException("Division by zero in operation \"" + s
+                       + "\", stack is \"" + this + "\"");
+            }
+            result = a / b;
             break;
          default:
-            if (b == 0) {
-               push(a);
-               push(b);
-               throw new RuntimeException("op: division by zero in \""
-                     + a + " " + b + " /\"");
-            }
-            push(a / b);
+            throw new RuntimeException("Illegal operation \"" + s
+                    + "\", allowed operations are + - * /");
       }
+
+      stack.removeLast();
+      stack.removeLast();
+      stack.addLast(result);
    }
 
    public long tos() {
-      if (stEmpty()) {
-         throw new RuntimeException("tos: cannot read top of an empty stack");
-      }
+      if (stEmpty()) throw new RuntimeException("Cannot read top: stack is empty");
       return stack.getLast();
    }
 
    @Override
    public boolean equals (Object o) {
-      if (!(o instanceof LongStack)) {
-         return false;
-      }
-      return stack.equals(((LongStack) o).stack);
+      if (this == o) return true;
+      if (!(o instanceof LongStack)) return false;
+
+      LongStack other = (LongStack) o;
+      return stack.equals(other.stack);
    }
 
    @Override
    public String toString() {
-      StringBuilder sb = new StringBuilder();
-      for (long l : stack) {
-         if (sb.length() > 0) {
-            sb.append(' ');
-         }
-         sb.append(l);
+      StringBuilder result = new StringBuilder();
+      for (Long l : stack) {
+         if (result.length() != 0) result.append(" ");
+         result.append(l);
       }
-      return sb.toString();
+      return result.toString();
    }
 
    public static long interpret (String pol) {
       if (pol == null || pol.trim().isEmpty()) {
-         throw new RuntimeException("interpret: expression is empty: \""
-               + pol + "\"");
+         throw new RuntimeException("Expression is missing: \"" + pol + "\"");
       }
-      LongStack stack = new LongStack();
-      for (String token : pol.trim().split("\\s+")) {
-         if (token.equals("+") || token.equals("-")
-               || token.equals("*") || token.equals("/")) {
-            if (stack.stack.size() < 2) {
-               throw new RuntimeException("interpret: not enough numbers for \""
-                     + token + "\" in expression \"" + pol + "\"");
+
+      LongStack st = new LongStack();
+      LongStack rs = new LongStack();
+      StringTokenizer tokens = new StringTokenizer(pol);
+
+      while (tokens.hasMoreTokens()) {
+         String token = tokens.nextToken();
+
+         if (token.equals(">R")) {
+            if (st.stEmpty()) {
+               throw new RuntimeException("Cannot perform \">R\": data stack is empty"
+                       + " in expression \"" + pol + "\"");
             }
-            try {
-               stack.op(token);
-            } catch (RuntimeException e) {
-               throw new RuntimeException("interpret: error in expression \""
-                     + pol + "\": " + e.getMessage(), e);
+            rs.push(st.pop());
+         } else if (token.equals("R>")) {
+            if (rs.stEmpty()) {
+               throw new RuntimeException("Cannot perform \"R>\": return stack is empty"
+                       + " in expression \"" + pol + "\"");
             }
+            st.push(rs.pop());
+         } else if (token.equals("R@")) {
+            if (rs.stEmpty()) {
+               throw new RuntimeException("Cannot perform \"R@\": return stack is empty"
+                       + " in expression \"" + pol + "\"");
+            }
+            st.push(rs.tos());
+         } else if (isOperator(token)) {
+            if (st.stack.size() < 2) {
+               throw new RuntimeException("Not enough numbers for operation \"" + token
+                       + "\" in expression \"" + pol + "\"");
+            }
+            st.op(token);
          } else {
             try {
-               stack.push(Long.parseLong(token));
+               st.push(Long.parseLong(token));
             } catch (NumberFormatException e) {
-               throw new RuntimeException("interpret: illegal symbol \""
-                     + token + "\" in expression \"" + pol + "\"");
+               throw new RuntimeException("Illegal symbol \"" + token
+                       + "\" in expression \"" + pol + "\"");
             }
          }
       }
-      if (stack.stack.size() > 1) {
-         throw new RuntimeException("interpret: too many numbers in expression \""
-               + pol + "\", stack left: [" + stack + "]");
+
+      if (!rs.stEmpty()) {
+         throw new RuntimeException("Return stack is not empty at the end of expression \""
+                 + pol + "\"");
       }
-      return stack.pop();
+      if (st.stack.size() > 1) {
+         throw new RuntimeException("Too many numbers in expression \"" + pol + "\"");
+      }
+      return st.pop();
+   }
+
+   private static boolean isOperator (String token) {
+      return token.length() == 1 && "+-*/".indexOf(token.charAt(0)) >= 0;
    }
 
 }
