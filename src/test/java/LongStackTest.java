@@ -305,6 +305,16 @@ public class LongStackTest {
    }
 
    @Test (timeout=1000)
+   public void testReturnStackEmptyAtEnd() {
+      String s = "4 >R 6 R> -";
+      assertEquals ("R-stack emptied by last R>; expression: " + s, 2,
+         LongStack.interpret (s));
+      s = "1 >R 2 >R 3 R> R> + +";
+      assertEquals ("R-stack emptied by last R>; expression: " + s, 6,
+         LongStack.interpret (s));
+   }
+
+   @Test (timeout=1000)
    public void testInterpretReturnStackMore() {
       String s = "7 >R R>";
       assertEquals ("expression: " + s, 7, LongStack.interpret (s));
